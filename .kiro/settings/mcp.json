@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "uvx",
+      "args": ["mcp-server-supabase"],
+      "env": {
+        "SUPABASE_URL": "https://ierczmnynyedcfhaldwg.supabase.co",
+        "SUPABASE_ANON_KEY": "sbp_f531a307829125b323775da6f30071195e320797"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

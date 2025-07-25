@@ -17,12 +17,31 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useUser();
+  const { isAuthenticated, isLoading, user } = useUser();
 
   if (isLoading) {
     return null; // Or a loading screen
   }
 
+  // Force authentication check - if not authenticated, only show auth screens
+  if (!isAuthenticated || !user) {
+    return (
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#121212" },
+          headerTintColor: "#F3F4F6",
+          contentStyle: { backgroundColor: "#121212" },
+          headerBackTitle: "Back",
+        }}
+      >
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="signup" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+      </Stack>
+    );
+  }
+
+  // User is authenticated, show protected screens
   return (
     <Stack
       screenOptions={{
@@ -32,20 +51,13 @@ function RootLayoutNav() {
         headerBackTitle: "Back",
       }}
     >
-      {isAuthenticated ? (
-        <>
-          <Stack.Screen name="Home" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="ai-assistant"
-            options={{ presentation: "modal", title: "AI Assistant" }}
-          />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-        </>
-      )}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="ai-assistant"
+        options={{ presentation: "modal", title: "AI Assistant" }}
+      />
+      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
     </Stack>
   );
 }

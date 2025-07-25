@@ -15,6 +15,7 @@ import { AIAssistantBottomSheet } from "@/components/AIChat";
 import { useRouter } from "expo-router";
 import { BlurView } from "expo-blur";
 import { StyleSheet } from "react-native";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export default function TabLayout() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function TabLayout() {
   };
 
   return (
-    <>
+    <AuthGuard>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: colors.accent.primary,
@@ -166,6 +167,6 @@ export default function TabLayout() {
         ref={aiBottomSheetRef}
         onQuickReplyPress={handleQuickReplyPress}
       />
-    </>
+    </AuthGuard>
   );
 }

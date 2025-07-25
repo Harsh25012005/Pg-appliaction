@@ -5,7 +5,7 @@
       "version": "1.0.0",
       "orientation": "portrait",
       "icon": "./assets/images/icon.png",
-      "scheme": "myapp",
+
       "userInterfaceStyle": "automatic",
       "newArchEnabled": true,
       "splash": {
@@ -53,6 +53,10 @@
       ],
       "experiments": {
         "typedRoutes": true
+      },
+      "extra": {
+        "supabaseUrl": "https://ierczmnynyedcfhaldwg.supabase.co",
+        "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllcmN6bW55bnllZGNmaGFsZHdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NDQwNTIsImV4cCI6MjA2ODMyMDA1Mn0.gsaE6KD8DeLuRC7-rXL0bAH9ifhN_pRYdUDpQ47xHsY"
       }
     }
   }
