@@ -10,7 +10,6 @@ import {
 import { useRouter } from "expo-router";
 import {
   IndianRupee,
-  UtensilsCrossed,
   AlertCircle,
   ChevronRight,
   Calendar,
@@ -23,25 +22,18 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { useUser } from "@/store/user-store";
 import { useRent } from "@/store/rent-store";
-import { useMeal } from "@/store/meal-store";
 import { useComplaint } from "@/store/complaint-store";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useUser();
   const { currentRent } = useRent();
-  const { getTodayMeal } = useMeal();
   const { pendingComplaints } = useComplaint();
 
-  const todayMeal = getTodayMeal();
   const pendingComplaintsCount = pendingComplaints.length;
 
   const navigateToRent = () => {
     router.push("/(tabs)/rent");
-  };
-
-  const navigateToMeals = () => {
-    router.push("/(tabs)/meals");
   };
 
   const navigateToComplaints = () => {
@@ -167,14 +159,6 @@ export default function HomeScreen() {
       {/* Quick Actions Grid */}
       <View style={styles.quickActionsGrid}>
         <QuickActionCard
-          title="Today's Meals"
-          subtitle={todayMeal ? "3 meals planned" : "No meals"}
-          icon={<UtensilsCrossed size={20} color={colors.accent.primary} />}
-          onPress={navigateToMeals}
-          color={colors.accent.primary}
-        />
-
-        <QuickActionCard
           title="Complaints"
           subtitle={
             pendingComplaintsCount > 0
@@ -199,73 +183,6 @@ export default function HomeScreen() {
           }
         />
       </View>
-
-      {/* Meal Status Card */}
-      {todayMeal && (
-        <Card variant="glass" style={styles.mealCard}>
-          <View style={styles.mealHeader}>
-            <View style={styles.mealIconContainer}>
-              <UtensilsCrossed size={20} color={colors.accent.secondary} />
-            </View>
-            <Text style={styles.mealTitle}>Today's Meal Plan</Text>
-          </View>
-
-          <View style={styles.mealGrid}>
-            <View style={styles.mealItem}>
-              <View style={styles.mealItemHeader}>
-                <Text style={styles.mealType}>Breakfast</Text>
-                <View
-                  style={[
-                    styles.mealStatusDot,
-                    todayMeal.breakfast.opted
-                      ? styles.statusActive
-                      : styles.statusInactive,
-                  ]}
-                />
-              </View>
-              <Text style={styles.mealMenu}>{todayMeal.breakfast.menu}</Text>
-            </View>
-
-            <View style={styles.mealItem}>
-              <View style={styles.mealItemHeader}>
-                <Text style={styles.mealType}>Lunch</Text>
-                <View
-                  style={[
-                    styles.mealStatusDot,
-                    todayMeal.lunch.opted
-                      ? styles.statusActive
-                      : styles.statusInactive,
-                  ]}
-                />
-              </View>
-              <Text style={styles.mealMenu}>{todayMeal.lunch.menu}</Text>
-            </View>
-
-            <View style={styles.mealItem}>
-              <View style={styles.mealItemHeader}>
-                <Text style={styles.mealType}>Dinner</Text>
-                <View
-                  style={[
-                    styles.mealStatusDot,
-                    todayMeal.dinner.opted
-                      ? styles.statusActive
-                      : styles.statusInactive,
-                  ]}
-                />
-              </View>
-              <Text style={styles.mealMenu}>{todayMeal.dinner.menu}</Text>
-            </View>
-          </View>
-
-          <Button
-            title="Manage Meals"
-            onPress={navigateToMeals}
-            variant="outline"
-            style={styles.mealButton}
-            size="medium"
-          />
-        </Card>
-      )}
 
       {/* Recent Activity */}
       <View style={styles.sectionHeader}>

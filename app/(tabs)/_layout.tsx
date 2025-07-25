@@ -3,7 +3,6 @@ import React, { useRef } from "react";
 import {
   Home,
   IndianRupee,
-  UtensilsCrossed,
   AlertCircle,
   Bell,
   MessageSquare,
@@ -29,9 +28,6 @@ export default function TabLayout() {
     aiBottomSheetRef.current?.close();
 
     switch (action) {
-      case "NAVIGATE_TO_MEALS":
-        router.push("/(tabs)/meals");
-        break;
       case "NAVIGATE_TO_COMPLAINTS":
         router.push("/(tabs)/complaints");
         break;
@@ -119,19 +115,7 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="meals"
-          options={{
-            title: "Meals",
-            tabBarIcon: ({ color, focused }) => (
-              <UtensilsCrossed
-                size={focused ? 24 : 22}
-                color={color}
-                fill={focused ? color : "none"}
-              />
-            ),
-          }}
-        />
+
         <Tabs.Screen
           name="complaints"
           options={{
