@@ -30,6 +30,10 @@ export const AIChat = ({ onClose, onQuickReplyPress }: AIChatProps) => {
     if (inputText.trim() === "") return;
     sendMessage(inputText);
     setInputText("");
+    // Scroll to bottom after sending
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const handleQuickReplyPress = (action: string) => {
@@ -73,11 +77,7 @@ export const AIChat = ({ onClose, onQuickReplyPress }: AIChatProps) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <LinearGradient
@@ -106,8 +106,24 @@ export const AIChat = ({ onClose, onQuickReplyPress }: AIChatProps) => {
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
         }
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListFooterComponent={
+          isLoading ? (
+            <View style={styles.loadingContainer}>
+              <View style={styles.assistantIcon}>
+                <Sparkles size={16} color={colors.accent.primary} />
+              </View>
+              <View style={styles.loadingBubble}>
+                <View style={styles.typingIndicator}>
+                  <View style={[styles.dot, styles.dot1]} />
+                  <View style={[styles.dot, styles.dot2]} />
+                  <View style={[styles.dot, styles.dot3]} />
+                </View>
+              </View>
+            </View>
+          ) : null
+        }
       />
 
       <View style={styles.quickRepliesContainer}>
@@ -126,42 +142,48 @@ export const AIChat = ({ onClose, onQuickReplyPress }: AIChatProps) => {
         </View>
       </View>
 
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            placeholder="Ask me anything..."
-            placeholderTextColor={colors.text.muted}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={500}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !inputText.trim() && styles.disabledButton,
-            ]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isLoading}
-            activeOpacity={0.8}
-          >
-            {inputText.trim() ? (
-              <LinearGradient
-                colors={colors.accent.gradient}
-                style={styles.sendButtonGradient}
-              >
-                <Send size={18} color={colors.text.primary} />
-              </LinearGradient>
-            ) : (
-              <Send size={18} color={colors.text.muted} />
-            )}
-          </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Ask me anything..."
+              placeholderTextColor={colors.text.muted}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={500}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              blurOnSubmit={false}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                !inputText.trim() && styles.disabledButton,
+              ]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isLoading}
+              activeOpacity={0.8}
+            >
+              {inputText.trim() ? (
+                <LinearGradient
+                  colors={colors.accent.gradient}
+                  style={styles.sendButtonGradient}
+                >
+                  <Send size={18} color={colors.text.primary} />
+                </LinearGradient>
+              ) : (
+                <Send size={18} color={colors.text.muted} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -180,7 +202,7 @@ export const AIAssistantBottomSheet = forwardRef<
   };
 
   return (
-    <BottomSheet ref={ref} snapPoints={[0.7, 0.95]}>
+    <BottomSheet ref={ref} snapPoints={[0.95]} style={styles.bottomSheetContainer}>
       <AIChat onClose={handleClose} onQuickReplyPress={onQuickReplyPress} />
     </BottomSheet>
   );
@@ -189,14 +211,20 @@ export const AIAssistantBottomSheet = forwardRef<
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.surface,
+  },
+  bottomSheetContainer: {
+    backgroundColor: colors.background.surface,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 20,
+    paddingBottom: 16,
+    paddingTop: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
+    backgroundColor: colors.background.surface,
   },
   headerLeft: {
     flexDirection: "row",
@@ -230,15 +258,18 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     flex: 1,
+    paddingHorizontal: 4,
   },
   messagesContent: {
-    paddingVertical: 20,
-    gap: 16,
+    paddingVertical: 16,
+    paddingBottom: 8,
+    flexGrow: 1,
   },
   messageContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    paddingHorizontal: 4,
+    marginBottom: 12,
+    paddingHorizontal: 8,
   },
   userMessage: {
     justifyContent: "flex-end",
@@ -282,9 +313,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   quickRepliesContainer: {
-    paddingVertical: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     borderTopWidth: 1,
     borderTopColor: colors.border.light,
+    backgroundColor: colors.background.surface,
   },
   quickRepliesTitle: {
     fontSize: 14,
@@ -311,7 +344,12 @@ const styles = StyleSheet.create({
     fontWeight: "500" as const,
   },
   inputContainer: {
-    paddingTop: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
+    backgroundColor: colors.background.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
   },
   inputWrapper: {
     flexDirection: "row",
@@ -347,5 +385,39 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  loadingBubble: {
+    backgroundColor: colors.background.elevated,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderBottomLeftRadius: 6,
+    marginLeft: 8,
+  },
+  typingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.text.muted,
+  },
+  dot1: {
+    opacity: 0.4,
+  },
+  dot2: {
+    opacity: 0.7,
+  },
+  dot3: {
+    opacity: 1,
   },
 });

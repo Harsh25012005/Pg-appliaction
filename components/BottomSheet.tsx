@@ -53,14 +53,15 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           return Math.abs(gestureState.dy) > 10;
         },
         onPanResponderMove: (_, gestureState) => {
-          const newValue = -snapPointsPixels[activeSnapPoint] + gestureState.dy;
-          if (newValue <= 0) {
+          const currentSnapHeight = snapPointsPixels[activeSnapPoint];
+          const newValue = (height - currentSnapHeight) + gestureState.dy;
+          if (newValue >= height - currentSnapHeight && newValue <= height) {
             animatedValue.setValue(newValue);
           }
           lastGestureDy.current = gestureState.dy;
         },
         onPanResponderRelease: () => {
-          const currentPosition = -currentValue.current;
+          const currentPosition = currentValue.current;
           
           if (lastGestureDy.current > 100) {
             // Swipe down - go to lower snap point or close
@@ -79,10 +80,10 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           } else {
             // Find closest snap point
             let closestPoint = 0;
-            let minDistance = Math.abs(snapPointsPixels[0] - currentPosition);
+            let minDistance = Math.abs((height - snapPointsPixels[0]) - currentPosition);
             
             for (let i = 1; i < snapPointsPixels.length; i++) {
-              const distance = Math.abs(snapPointsPixels[i] - currentPosition);
+              const distance = Math.abs((height - snapPointsPixels[i]) - currentPosition);
               if (distance < minDistance) {
                 minDistance = distance;
                 closestPoint = i;
@@ -99,8 +100,9 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
 
     const snapToPoint = (index: number) => {
       setActiveSnapPoint(index);
+      const targetHeight = snapPointsPixels[index];
       Animated.spring(animatedValue, {
-        toValue: -snapPointsPixels[index],
+        toValue: height - targetHeight,
         useNativeDriver: true,
         bounciness: 4,
       }).start();
@@ -113,7 +115,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
 
     const close = () => {
       Animated.timing(animatedValue, {
-        toValue: 0,
+        toValue: height,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
@@ -130,29 +132,32 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     if (!isOpen) return null;
 
     return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <TouchableWithoutFeedback onPress={close}>
           <View style={styles.backdrop} />
         </TouchableWithoutFeedback>
         
-        <Animated.View
-          style={[
-            styles.bottomSheet,
-            style,
-            {
-              transform: [{ translateY: animatedValue }],
-            },
-          ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <View {...panResponder.panHandlers}>
-            <View style={styles.handle} />
-          </View>
-          <View style={styles.content}>{children}</View>
-        </Animated.View>
-      </KeyboardAvoidingView>
+          <Animated.View
+            style={[
+              styles.bottomSheet,
+              style,
+              {
+                transform: [{ translateY: animatedValue }],
+              },
+            ]}
+          >
+            <View {...panResponder.panHandlers}>
+              <View style={styles.handle} />
+            </View>
+            <View style={styles.content}>{children}</View>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </View>
     );
   }
 );
@@ -164,8 +169,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'flex-end',
     zIndex: 1000,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   backdrop: {
     position: 'absolute',
@@ -180,7 +187,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     minHeight: 200,
-    maxHeight: height * 0.9,
+    maxHeight: height * 0.95,
+    flex: 1,
   },
   handle: {
     width: 40,
@@ -188,11 +196,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.muted,
     borderRadius: 3,
     alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 8,
+    marginBottom: 8,
   },
   content: {
-    padding: 16,
-    paddingBottom: 32,
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 16,
   },
 });

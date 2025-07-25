@@ -35,14 +35,9 @@ export default function AIAssistantScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <AIChat onClose={handleClose} onQuickReplyPress={handleQuickReplyPress} />
-      </View>
-    </KeyboardAvoidingView>
+    <View style={styles.container}>
+      <AIChat onClose={handleClose} onQuickReplyPress={handleQuickReplyPress} />
+    </View>
   );
 }
 
@@ -50,9 +45,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.surface,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
 });
