@@ -1,77 +1,68 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../utils/supabase';
 import createContextHook from '@nkzw/create-context-hook';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useUser } from './user-store';
 import { Rent } from '@/types';
 
 export const [RentProvider, useRent] = createContextHook(() => {
+  const { user } = useUser();
   const [rentHistory, setRentHistory] = useState<Rent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch rent/payment history from Supabase
+  const fetchRentData = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('payment_transactions')
+      .select('*')
+      .eq('tenant_id', user.id)
+      .order('payment_date', { ascending: false });
+    if (error) {
+      setRentHistory([]);
+    } else {
+      setRentHistory(
+        (data || []).map((row: any) => ({
+          id: row.id.toString(),
+          month: new Date(row.payment_date).toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+          amount: Number(row.amount),
+          dueDate: row.payment_date,
+          status: row.status === 'paid' ? 'paid' : 'pending',
+          paidOn: row.status === 'paid' ? row.payment_date : null,
+          receipt: row.receipt_url ?? null,
+        }))
+      );
+    }
+    setIsLoading(false);
+  }, [user?.id]);
+
+  // Real-time subscription
   useEffect(() => {
-    const loadRentData = async () => {
-      try {
-        const data = await AsyncStorage.getItem('rentHistory');
-        if (data) {
-          setRentHistory(JSON.parse(data));
-        } else {
-          // Mock rent data
-          const mockRentHistory: Rent[] = [
-            {
-              id: '1',
-              month: 'July 2025',
-              amount: 3000,
-              dueDate: '2025-07-05',
-              status: 'pending',
-            },
-            {
-              id: '2',
-              month: 'June 2025',
-              amount: 3000,
-              dueDate: '2025-06-05',
-              status: 'paid',
-              paidOn: '2025-06-03',
-              receipt: 'https://example.com/receipt-june.pdf',
-            },
-            {
-              id: '3',
-              month: 'May 2025',
-              amount: 3000,
-              dueDate: '2025-05-05',
-              status: 'paid',
-              paidOn: '2025-05-04',
-              receipt: 'https://example.com/receipt-may.pdf',
-            },
-          ];
-          setRentHistory(mockRentHistory);
-          await AsyncStorage.setItem('rentHistory', JSON.stringify(mockRentHistory));
-        }
-      } catch (error) {
-        console.error('Failed to load rent data:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!user?.id) return;
+    fetchRentData();
+    const channel = supabase
+      .channel('payment-transactions-rt')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payment_transactions', filter: `tenant_id=eq.${user.id}` },
+        () => fetchRentData()
+      )
+      .subscribe();
+    return () => {
+      channel.unsubscribe();
     };
+  }, [user?.id, fetchRentData]);
 
-    loadRentData();
-  }, []);
-
-  const payRent = async (rentId: string) => {
-    const updatedHistory = rentHistory.map(rent => {
-      if (rent.id === rentId) {
-        return {
-          ...rent,
-          status: 'paid' as const,
-          paidOn: new Date().toISOString().split('T')[0],
-          receipt: `https://example.com/receipt-${rent.month.toLowerCase().replace(' ', '-')}.pdf`,
-        };
-      }
-      return rent;
-    });
-
-    setRentHistory(updatedHistory);
-    await AsyncStorage.setItem('rentHistory', JSON.stringify(updatedHistory));
-    return true;
-  };
+  // Pay rent (mark as paid)
+  const payRent = useCallback(async (rentId: string) => {
+    const { error } = await supabase
+      .from('payment_transactions')
+      .update({ status: 'paid', payment_date: new Date().toISOString() })
+      .eq('id', rentId)
+      .eq('tenant_id', user?.id);
+    if (!error) fetchRentData();
+    return !error;
+  }, [user?.id, fetchRentData]);
 
   return {
     rentHistory,
