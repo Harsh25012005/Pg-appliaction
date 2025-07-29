@@ -98,7 +98,7 @@ export const useProfile = () => {
       if (data) {
         setProfileData(data);
       }
-      
+
       return data;
     } catch (err: any) {
       throw new Error(err.message || 'Failed to update profile');
@@ -139,9 +139,17 @@ export const useProfile = () => {
         }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIPTION_ERROR') {
-          // Real-time subscription failed, but app still works
-          // User can refresh manually
+        // Handle different subscription states
+        switch (status) {
+          case 'SUBSCRIBED':
+            // Successfully subscribed to real-time updates
+            break;
+          case 'CHANNEL_ERROR':
+          case 'TIMED_OUT':
+          case 'CLOSED':
+            // Real-time subscription failed, but app still works
+            // User can refresh manually
+            break;
         }
       });
 
