@@ -187,7 +187,12 @@ export default function ComplaintsScreen() {
           <View style={styles.imagesContainer}>
             {complaintImages.map((image, index) => (
               <View key={index} style={styles.imageContainer}>
-                <Image source={{ uri: image }} style={styles.image} />
+                {image && image.trim() !== '' && (
+                  <Image
+                    source={{ uri: image }}
+                    style={styles.image}
+                  />
+                )}
                 <TouchableOpacity
                   style={styles.removeImageButton}
                   onPress={() => removeImage(index)}

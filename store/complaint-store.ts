@@ -54,13 +54,28 @@ export const [ComplaintProvider, useComplaint] = createContextHook(() => {
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'tenant_id'>
   ) => {
     const now = new Date().toISOString();
-    // If complaint.images or complaint.image is missing, set to null
+    // Map 'title' to 'issue' for DB, remove 'title' from insert
+    const {
+      title,
+      images,
+      urgency,
+      type,
+      description,
+      ...rest
+    } = complaint;
+    // 'date' is required (NOT NULL in DB) and should be just the date
+    const date = now.split('T')[0];
     const safeComplaint = {
-      ...complaint,
-      images: complaint.hasOwnProperty('images') ? complaint.images : null,
+      issue: title, // Map title to issue
+      description: description ?? '',
+      type: type ?? '',
+      urgency: urgency ?? '',
+      images: Array.isArray(images) ? images : images ? [images] : null,
       status: 'Pending',
       createdAt: now,
       updatedAt: now,
+      date: date,
+      tenant: user?.name || '', // Fix: set tenant (NOT NULL in DB)
       tenant_id: user?.id,
     };
     const { data, error } = await supabase
@@ -76,11 +91,21 @@ export const [ComplaintProvider, useComplaint] = createContextHook(() => {
     return data;
   };
 
+  // Normalize status for robust tab filtering
+  const normalizeStatus = (status?: string) => {
+    if (!status) return '';
+    const s = status.trim().toLowerCase().replace(/\s+/g, '-');
+    if (s === 'in-progress' || s === 'in progress') return 'in-progress';
+    if (s === 'pending') return 'pending';
+    if (s === 'resolved') return 'resolved';
+    return s;
+  };
+
   return {
     complaints,
-    pendingComplaints: complaints.filter((c) => c.status?.toLowerCase() === 'pending'),
-    inProgressComplaints: complaints.filter((c) => c.status?.toLowerCase() === 'in progress'),
-    resolvedComplaints: complaints.filter((c) => c.status?.toLowerCase() === 'resolved'),
+    pendingComplaints: complaints.filter((c) => normalizeStatus(c.status) === 'pending'),
+    inProgressComplaints: complaints.filter((c) => normalizeStatus(c.status) === 'in-progress'),
+    resolvedComplaints: complaints.filter((c) => normalizeStatus(c.status) === 'resolved'),
     isLoading,
     addComplaint,
   };
